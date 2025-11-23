@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maghil Online Services - Receipt Generator</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        :root {
+            --primary: #2c5aa0;
+            --secondary: #e74c3c;
+            --accent: #8e44ad;
+            --light: #f8f9fa;
+            --dark: #2c3e50;
+            --success: #27ae60;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #2c5aa0, #8e44ad);
+            min-height: 100vh;
+            color: var(--light);
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        #three-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            border-radius: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .logo-container {
+            height: 180px;
+            margin: 20px auto;
+            position: relative;
+            width: 300px;
+            perspective: 1000px;
+        }
+
+        .logo-3d {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            transform-style: preserve-3d;
+            transition: transform 1.5s ease-in-out;
+        }
+
+        .logo-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .logo-face-front {
+            background: linear-gradient(45deg, var(--primary), var(--accent));
+        }
+
+        .logo-face-back {
+            background: linear-gradient(45deg, var(--secondary), #ff9a3d);
+            transform: rotateY(180deg);
+        }
+
+        .logo-text {
+            color: white;
+            font-weight: bold;
+            font-size: 1.5rem;
+            text-align: center;
+            padding: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        h1 {
+            color: white;
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .tagline {
+            font-size: 1.2rem;
+            color: #e0e0e0;
+            margin-bottom: 10px;
+        }
+
+        .address {
+            font-size: 1rem;
+            color: #cccccc;
+            margin-bottom: 5px;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .form-container, .preview-container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .form-container:hover, .preview-container:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+        }
+
+        h2 {
+            color: white;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--secondary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        h2 i {
+            color: var(--secondary);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #e0e0e0;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(44, 90, 160, 0.3);
+            outline: none;
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        input::placeholder, textarea::placeholder {
+            color: #cccccc;
+        }
+
+        .items-container {
+            margin-top: 10px;
+        }
+
+        .item-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr auto;
+            gap: 10px;
+            margin-bottom: 15px;
+            align-items: center;
+            padding: 10px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            transition: all 0.3s;
+        }
+
+        .item-row:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #1e4a8a;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-secondary {
+            background: var(--secondary);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #c0392b;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+            padding: 8px 12px;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #219653;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .receipt {
+            background: rgba(255, 255, 255, 0.95);
+            border: 2px dashed #ccc;
+            border-radius: 10px;
+            padding: 25px;
+            font-family: 'Courier New', monospace;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s;
+            color: #333;
+        }
+
+        .receipt-header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px dashed #ccc;
+        }
+
+        .receipt-title {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #2c5aa0, #e74c3c, #8e44ad);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .receipt-subtitle {
+            font-size: 1.2rem;
+            color: #2c5aa0;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .receipt-details {
+            margin-bottom: 20px;
+        }
+
+        .receipt-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        .receipt-table th, .receipt-table td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px dashed #ddd;
+        }
+
+        .receipt-table th {
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        .receipt-totals {
+            border-top: 2px dashed #ccc;
+            padding-top: 15px;
+            margin-top: 15px;
+        }
+
+        .receipt-totals div {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .receipt-footer {
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 2px dashed #ccc;
+            font-style: italic;
+            color: #666;
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .fade-in {
+            animation: fadeIn 1s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .floating {
+            animation: floating 3s ease-in-out infinite;
+        }
+
+        @keyframes floating {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px;
+            color: #e0e0e0;
+            font-size: 0.9rem;
+        }
+
+        .online-services {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .service-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(5px);
+            border-radius: 10px;
+            padding: 15px;
+            width: 150px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .service-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .service-card i {
+            font-size: 2rem;
+            color: var(--secondary);
+            margin-bottom: 10px;
+        }
+
+        .service-card h4 {
+            color: white;
+            margin-bottom: 5px;
+        }
+
+        .service-card p {
+            font-size: 0.8rem;
+            color: #cccccc;
+        }
+
+        .floating-shapes {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .shape {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            animation: float 15s infinite linear;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0) rotate(0deg); }
+            100% { transform: translateY(-1000px) rotate(720deg); }
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes slideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+
+        /* Print Styles */
+        @media print {
+            body * {
+                visibility: hidden;
+                margin: 0;
+                padding: 0;
+            }
+            
+            #three-container, .floating-shapes, .form-container, 
+            .preview-container h2, .online-services, footer, 
+            header, .container > *:not(.receipt) {
+                display: none !important;
+            }
+            
+            .receipt, .receipt * {
+                visibility: visible;
+            }
+            
+            .receipt {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: auto;
+                margin: 0;
+                padding: 20px;
+                box-shadow: none;
+                background: white;
+                border: none;
+                border-radius: 0;
+            }
+            
+            .receipt-header {
+                border-bottom: 2px solid #000;
+            }
+            
+            .receipt-table th, .receipt-table td {
+                border-bottom: 1px solid #000;
+            }
+            
+            .receipt-totals {
+                border-top: 2px solid #000;
+            }
+            
+            .receipt-footer {
+                border-top: 2px solid #000;
+            }
+            
+            .btn {
+                display: none !important;
+            }
+        }
+
+        /* Print-only receipt styling */
+        .print-receipt {
+            display: none;
+        }
+
+        @media print {
+            .print-receipt {
+                display: block;
+                font-family: 'Courier New', monospace;
+                width: 100%;
+                padding: 20px;
+            }
+            
+            .no-print {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="three-container"></div>
+    
+    <div class="floating-shapes">
+        <div class="shape" style="width: 80px; height: 80px; top: 10%; left: 5%; animation-delay: 0s;"></div>
+        <div class="shape" style="width: 120px; height: 120px; top: 20%; left: 80%; animation-delay: 2s;"></div>
+        <div class="shape" style="width: 60px; height: 60px; top: 60%; left: 10%; animation-delay: 4s;"></div>
+        <div class="shape" style="width: 100px; height: 100px; top: 70%; left: 70%; animation-delay: 6s;"></div>
+        <div class="shape" style="width: 90px; height: 90px; top: 30%; left: 40%; animation-delay: 8s;"></div>
+    </div>
+
+    <div class="container">
+        <header class="no-print">
+            <div class="logo-container">
+                <div class="logo-3d" id="logo3d">
+                    <div class="logo-face logo-face-front">
+                        <div class="logo-text">
+                            <div style="font-size: 1.8rem; margin-bottom: 5px;">MAGHIL</div>
+                            <div style="font-size: 1.4rem;">ONLINE SERVICES</div>
+                        </div>
+                    </div>
+                    <div class="logo-face logo-face-back">
+                        <div class="logo-text">
+                            <div style="font-size: 1.5rem; margin-bottom: 5px;">RTO</div>
+                            <div style="font-size: 1.2rem;">SERVICES</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <h1 class="floating">Maghil Online Services</h1>
+            <p class="tagline">Your Trusted RTO & Customer Service Partner</p>
+            <p class="address">Sirupooluvappatti, 15 Velampalayam</p>
+            <p class="address">Tiruppur RTO North Opposite, Tiruppur - 641603</p>
+        </header>
+
+        <div class="main-content no-print">
+            <div class="form-container fade-in">
+                <h2><i class="fas fa-edit"></i> Receipt Details</h2>
+                
+                <div class="form-group">
+                    <label for="customerName"><i class="fas fa-user"></i> Customer Name</label>
+                    <input type="text" id="customerName" placeholder="Enter customer name">
+                </div>
+                
+                <div class="form-group">
+                    <label for="customerContact"><i class="fas fa-phone"></i> Contact Information</label>
+                    <input type="text" id="customerContact" placeholder="Phone number">
+                </div>
+                
+                <div class="form-group">
+                    <label><i class="fas fa-shopping-cart"></i> Services / Items</label>
+                    <div class="items-container" id="itemsContainer">
+                        <div class="item-row">
+                            <input type="text" class="item-name" placeholder="Service/item name">
+                            <input type="number" class="item-qty" placeholder="Qty" min="1" value="1">
+                            <input type="number" class="item-price" placeholder="Price" step="0.01" min="0">
+                            <button class="btn btn-danger" onclick="removeItem(this)"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>
+                    <button class="btn btn-secondary" onclick="addItem()"><i class="fas fa-plus"></i> Add Item</button>
+                </div>
+                
+                <div class="form-group">
+                    <label for="paymentMethod"><i class="fas fa-credit-card"></i> Payment Method</label>
+                    <select id="paymentMethod">
+                        <option value="Cash">Cash</option>
+                        <option value="Credit Card">Credit Card</option>
+                        <option value="Debit Card">Debit Card</option>
+                        <option value="Mobile Payment">Mobile Payment</option>
+                    </select>
+                </div>
+                
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="generateReceipt()"><i class="fas fa-receipt"></i> Generate Receipt</button>
+                    <button class="btn btn-success" onclick="printReceipt()" id="printBtn"><i class="fas fa-print"></i> Print Receipt</button>
+                    <button class="btn btn-secondary" onclick="saveReceipt()"><i class="fas fa-save"></i> Save Receipt</button>
+                    <button class="btn btn-danger" onclick="clearForm()"><i class="fas fa-broom"></i> Clear Form</button>
+                </div>
+            </div>
+            
+            <div class="preview-container fade-in">
+                <h2><i class="fas fa-eye"></i> Receipt Preview</h2>
+                <div class="receipt" id="receiptOutput">
+                    <div class="receipt-header">
+                        <div class="receipt-title">MAGHIL ONLINE SERVICES</div>
+                        <div class="receipt-subtitle">RTO & Documentation Center</div>
+                        <p>Sirupooluvappatti, 15 Velampalayam</p>
+                        <p>Tiruppur RTO North Opposite</p>
+                        <p>Tiruppur - 641603 | Contact : info@maghilonlineservices.org</p>
+                    </div>
+                    
+                    <div class="receipt-details">
+                        <p><strong>Memo No:</strong> MAG-<span id="memoNumber">001</span></p>
+                        <p><strong>Date:</strong> <span id="currentDate"></span></p>
+                        <p><strong>Customer:</strong> <span id="printCustomerName">[Customer Name]</span></p>
+                        <p><strong>Contact:</strong> <span id="printCustomerContact">[Customer Contact]</span></p>
+                    </div>
+                    
+                    <table class="receipt-table">
+                        <thead>
+                            <tr>
+                                <th>Service/Item</th>
+                                <th>Qty</th>
+                                <th>Price</th>
+                                <th>Total</th>
+                            </tr>
+                        </thead>
+                        <tbody id="receiptItems">
+                            <tr>
+                                <td colspan="4" style="text-align: center;">No items added yet</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <div class="receipt-totals">
+                        <div>
+                            <span><strong>Grand Total:</strong></span>
+                            <span><strong id="printGrandTotal">₹0.00</strong></span>
+                        </div>
+                    </div>
+                    
+                    <div class="receipt-details">
+                        <p><strong>Payment Method:</strong> <span id="printPaymentMethod">[Payment Method]</span></p>
+                    </div>
+                    
+                    <div class="receipt-footer">
+                        <p>Thank you for your business!</p>
+                        <p>Keep In Touch!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="online-services no-print">
+            <div class="service-card pulse">
+                <i class="fas fa-car"></i>
+                <h4>RTO Services</h4>
+                <p>License & Registration</p>
+            </div>
+            <div class="service-card pulse">
+                <i class="fas fa-file-contract"></i>
+                <h4>Documentation</h4>
+                <p>All Govt. Services</p>
+            </div>
+            <div class="service-card pulse">
+                <i class="fas fa-print"></i>
+                <h4>Printing</h4>
+                <p>Photo & Document</p>
+            </div>
+            <div class="service-card pulse">
+                <i class="fas fa-headset"></i>
+                <h4>Support</h4>
+                <p>Customer Assistance</p>
+            </div>
+        </div>
+
+        <footer class="no-print">
+            <p>&copy; 2025 Maghil Online Services. All rights reserved.</p>
+            <p>Government Certified Service Center</p>
+        </footer>
+    </div>
+
+    <script>
+        // Set current date
+        document.getElementById('currentDate').textContent = new Date().toLocaleDateString();
+        
+        // Memo number counter
+        let memoCounter = 1;
+
+        // 3D Logo Rotation
+        const logo3d = document.getElementById('logo3d');
+        let isFlipped = false;
+        
+        function flipLogo() {
+            isFlipped = !isFlipped;
+            logo3d.style.transform = isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)';
+        }
+        
+        setInterval(flipLogo, 3000);
+
+        // Three.js 3D Environment
+        let scene, camera, renderer, controls;
+        let cubes = [];
+        
+        function initThreeJS() {
+            // Create scene
+            scene = new THREE.Scene();
+            
+            // Create camera
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.z = 5;
+            
+            // Create renderer
+            renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setClearColor(0x000000, 0);
+            document.getElementById('three-container').appendChild(renderer.domElement);
+            
+            // Add orbit controls
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.enableZoom = false;
+            controls.autoRotate = true;
+            controls.autoRotateSpeed = 0.5;
+            
+            // Add ambient light
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+            scene.add(ambientLight);
+            
+            // Add directional light
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(1, 1, 1);
+            scene.add(directionalLight);
+            
+            // Create floating cubes
+            const geometry = new THREE.BoxGeometry(1, 1, 1);
+            
+            for (let i = 0; i < 20; i++) {
+                const material = new THREE.MeshPhongMaterial({
+                    color: Math.random() * 0xffffff,
+                    transparent: true,
+                    opacity: 0.6
+                });
+                
+                const cube = new THREE.Mesh(geometry, material);
+                
+                cube.position.x = Math.random() * 20 - 10;
+                cube.position.y = Math.random() * 20 - 10;
+                cube.position.z = Math.random() * 20 - 10;
+                
+                cube.rotation.x = Math.random() * Math.PI;
+                cube.rotation.y = Math.random() * Math.PI;
+                
+                cube.scale.setScalar(Math.random() * 0.5 + 0.5);
+                
+                scene.add(cube);
+                cubes.push(cube);
+            }
+            
+            // Handle window resize
+            window.addEventListener('resize', onWindowResize, false);
+            
+            // Start animation
+            animate();
+        }
+        
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // Rotate cubes
+            cubes.forEach(cube => {
+                cube.rotation.x += 0.01;
+                cube.rotation.y += 0.01;
+            });
+            
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        
+        // Initialize Three.js
+        initThreeJS();
+
+        // Add item row
+        function addItem() {
+            const container = document.getElementById('itemsContainer');
+            const newItem = document.createElement('div');
+            newItem.className = 'item-row';
+            newItem.innerHTML = `
+                <input type="text" class="item-name" placeholder="Service/item name">
+                <input type="number" class="item-qty" placeholder="Qty" min="1" value="1">
+                <input type="number" class="item-price" placeholder="Price" step="0.01" min="0">
+                <button class="btn btn-danger" onclick="removeItem(this)"><i class="fas fa-trash"></i></button>
+            `;
+            container.appendChild(newItem);
+        }
+
+        // Remove item row
+        function removeItem(button) {
+            if (document.querySelectorAll('.item-row').length > 1) {
+                button.parentElement.remove();
+            } else {
+                alert("You need at least one item in the receipt.");
+            }
+        }
+
+        // Generate receipt
+        function generateReceipt() {
+            const customerName = document.getElementById('customerName').value || 'Walk-in Customer';
+            const customerContact = document.getElementById('customerContact').value || 'N/A';
+            const paymentMethod = document.getElementById('paymentMethod').value;
+            
+            // Update memo number
+            document.getElementById('memoNumber').textContent = memoCounter.toString().padStart(3, '0');
+            memoCounter++;
+            
+            // Update receipt header for print
+            document.getElementById('printCustomerName').textContent = customerName;
+            document.getElementById('printCustomerContact').textContent = customerContact;
+            document.getElementById('printPaymentMethod').textContent = paymentMethod;
+            
+            // Calculate items and totals
+            let subtotal = 0;
+            let itemsHTML = '';
+            
+            document.querySelectorAll('.item-row').forEach(row => {
+                const name = row.querySelector('.item-name').value;
+                const qty = parseInt(row.querySelector('.item-qty').value) || 0;
+                const price = parseFloat(row.querySelector('.item-price').value) || 0;
+                const total = qty * price;
+                subtotal += total;
+                
+                if(name && qty > 0 && price > 0) {
+                    itemsHTML += `
+                        <tr>
+                            <td>${name}</td>
+                            <td>${qty}</td>
+                            <td>₹${price.toFixed(2)}</td>
+                            <td>₹${total.toFixed(2)}</td>
+                        </tr>
+                    `;
+                }
+            });
+            
+            // If no valid items, show placeholder
+            if (itemsHTML === '') {
+                itemsHTML = '<tr><td colspan="4" style="text-align: center;">No valid items added</td></tr>';
+            }
+            
+            document.getElementById('receiptItems').innerHTML = itemsHTML;
+            
+            const grandTotal = subtotal;
+            
+            // Update totals
+            document.getElementById('printGrandTotal').textContent = `₹${grandTotal.toFixed(2)}`;
+            
+            // Add animation to receipt
+            const receipt = document.getElementById('receiptOutput');
+            receipt.classList.remove('pulse');
+            void receipt.offsetWidth;
+            receipt.classList.add('pulse');
+            
+            // Add 3D effect to receipt
+            receipt.style.transform = 'perspective(1000px) rotateX(5deg)';
+            setTimeout(() => {
+                receipt.style.transform = 'perspective(1000px) rotateX(0deg)';
+            }, 500);
+        }
+
+        // Print receipt - FIXED FUNCTION
+        function printReceipt() {
+            // First generate the receipt to ensure all data is updated
+            generateReceipt();
+            
+            // Use browser's print functionality
+            window.print();
+        }
+
+        // Save receipt (simulated)
+        function saveReceipt() {
+            // Create a floating notification
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: var(--success);
+                color: white;
+                padding: 15px 25px;
+                border-radius: 8px;
+                box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+                z-index: 1000;
+                animation: slideIn 0.5s ease;
+            `;
+            notification.innerHTML = '<i class="fas fa-check-circle"></i> Receipt saved successfully!';
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.5s ease';
+                setTimeout(() => notification.remove(), 500);
+            }, 3000);
+        }
+
+        // Clear form
+        function clearForm() {
+            if (confirm("Are you sure you want to clear the form?")) {
+                document.getElementById('customerName').value = '';
+                document.getElementById('customerContact').value = '';
+                document.getElementById('paymentMethod').value = 'Cash';
+                
+                const itemsContainer = document.getElementById('itemsContainer');
+                itemsContainer.innerHTML = '';
+                addItem();
+                
+                generateReceipt();
+            }
+        }
+
+        // Initialize with one item row
+        window.onload = function() {
+            addItem();
+            generateReceipt();
+            
+            // Add some sample data for demo
+            setTimeout(() => {
+                document.getElementById('customerName').value = 'Rajesh Kumar';
+                document.getElementById('customerContact').value = '9876543210';
+                document.querySelector('.item-name').value = 'DL Renewal Service';
+                document.querySelector('.item-price').value = '500';
+                generateReceipt();
+            }, 1000);
+        };
+
+        // Add interactive background elements
+        document.addEventListener('mousemove', (e) => {
+            const shapes = document.querySelectorAll('.shape');
+            const mouseX = e.clientX / window.innerWidth;
+            const mouseY = e.clientY / window.innerHeight;
+            
+            shapes.forEach((shape, index) => {
+                const speed = (index + 1) * 0.0002;
+                const x = (mouseX - 0.5) * speed * 100;
+                const y = (mouseY - 0.5) * speed * 100;
+                
+                shape.style.transform = `translate(${x}px, ${y}px)`;
+            });
+        });
+    </script>
+</body>
+</html>
