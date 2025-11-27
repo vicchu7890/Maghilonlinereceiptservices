@@ -476,74 +476,49 @@
             to { transform: translateX(100%); opacity: 0; }
         }
 
-        /* Print Styles */
+        /* Print Styles - FIXED */
         @media print {
-            body * {
-                visibility: hidden;
+            body {
+                background: white !important;
+                color: black !important;
                 margin: 0;
                 padding: 0;
             }
             
-            #three-container, .floating-shapes, .form-container, 
+            .no-print, #three-container, .floating-shapes, .form-container, 
             .preview-container h2, .online-services, footer, 
-            header, .container > *:not(.receipt) {
+            header, .container > *:not(.receipt), .btn {
                 display: none !important;
-            }
-            
-            .receipt, .receipt * {
-                visibility: visible;
             }
             
             .receipt {
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 100%;
-                height: auto;
-                margin: 0;
-                padding: 20px;
-                box-shadow: none;
-                background: white;
-                border: none;
-                border-radius: 0;
+                background: white !important;
+                color: black !important;
+                border: none !important;
+                box-shadow: none !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                margin: 0 !important;
+                padding: 20px !important;
+                position: static !important;
+                transform: none !important;
+                animation: none !important;
             }
             
             .receipt-header {
-                border-bottom: 2px solid #000;
+                border-bottom: 2px solid #000 !important;
             }
             
             .receipt-table th, .receipt-table td {
-                border-bottom: 1px solid #000;
+                border-bottom: 1px solid #000 !important;
             }
             
             .receipt-totals {
-                border-top: 2px solid #000;
+                border-top: 2px solid #000 !important;
             }
             
             .receipt-footer {
-                border-top: 2px solid #000;
-            }
-            
-            .btn {
-                display: none !important;
-            }
-        }
-
-        /* Print-only receipt styling */
-        .print-receipt {
-            display: none;
-        }
-
-        @media print {
-            .print-receipt {
-                display: block;
-                font-family: 'Courier New', monospace;
-                width: 100%;
-                padding: 20px;
-            }
-            
-            .no-print {
-                display: none !important;
+                border-top: 2px solid #000 !important;
             }
         }
     </style>
